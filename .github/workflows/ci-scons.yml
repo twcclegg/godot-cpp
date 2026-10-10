@@ -117,6 +117,15 @@ jobs:
             run-tests: false
             cache-name: ios-arm64
 
+          - name: 🥽 visionOS (arm64)
+            os: macos-latest
+            platform: visionos
+            artifact-name: godot-cpp-visionos-arm64-release
+            artifact-path: bin/libgodot-cpp.visionos.template_release.arm64.a
+            flags: arch=arm64
+            run-tests: false
+            cache-name: visionos-arm64
+
           - name: 🌐 Web (wasm32)
             os: ubuntu-24.04
             platform: web

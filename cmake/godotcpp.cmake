@@ -23,6 +23,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/android.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ios.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/linux.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/visionos.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/web.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/windows.cmake)
 
@@ -38,6 +39,7 @@ set(PLATFORM_LIST
     windows
     android
     ios
+    visionos
     web
 )
 
@@ -208,6 +210,7 @@ function(godotcpp_options)
     ios_options()
     linux_options()
     macos_options()
+    visionos_options()
     web_options()
     windows_options()
 endfunction()
@@ -329,6 +332,7 @@ function(godotcpp_generate)
         "$<$<PLATFORM_ID:iOS>:ios>"
         "$<$<PLATFORM_ID:Linux>:linux>"
         "$<$<PLATFORM_ID:Darwin>:macos>"
+        "$<$<PLATFORM_ID:visionOS>:visionos>"
         "$<$<PLATFORM_ID:Emscripten>:web>"
         "$<$<PLATFORM_ID:Windows>:windows>"
         "$<$<PLATFORM_ID:Msys>:windows>"
@@ -436,6 +440,8 @@ function(godotcpp_generate)
         linux_generate()
     elseif(CMAKE_SYSTEM_NAME STREQUAL Darwin)
         macos_generate()
+    elseif(CMAKE_SYSTEM_NAME STREQUAL visionOS)
+        visionos_generate()
     elseif(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
         web_generate()
     elseif(CMAKE_SYSTEM_NAME STREQUAL Windows)
