@@ -1,0 +1,83 @@
+# Experiment for godot-proposals#13834 (not for upstream): does the stock iOS build work for visionOS?
+name: visionOS baseline
+on:
+  push:
+    branches: [visionos-baseline]
+  workflow_dispatch:
+
+jobs:
+  baseline:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Install SCons
+        run: python -m pip install scons
+      - name: Versions
+        run: |
+          xcodebuild -version
+          xcrun --sdk xros --show-sdk-version
+          xcrun --sdk xrsimulator --show-sdk-version
+          scons --version | head -2
+      - name: Build godot-cpp for iOS (unmodified master)
+        run: scons platform=ios arch=arm64 target=template_release api_version=4.7 -j"$(sysctl -n hw.ncpu)"
+      - name: Platform of the iOS archive
+        run: otool -l bin/libgodot-cpp.ios.template_release.arm64.a | grep -A4 LC_BUILD_VERSION | grep -E 'platform|minos|sdk' | sort | uniq -c
+      - name: Write a minimal extension
+        run: |
+          mkdir -p probe
+          cat > probe/probe.cpp <<'CPP'
+          #include <gdextension_interface.h>
+          #include <godot_cpp/core/class_db.hpp>
+          #include <godot_cpp/core/defs.hpp>
+          #include <godot_cpp/godot.hpp>
+          #include <godot_cpp/classes/node.hpp>
+          #include <godot_cpp/variant/utility_functions.hpp>
+          using namespace godot;
+          class Probe : public Node {
+              GDCLASS(Probe, Node)
+          protected:
+              static void _bind_methods() { ClassDB::bind_method(D_METHOD("hello"), &Probe::hello); }
+          public:
+              String hello() { return "hello from visionOS"; }
+          };
+          static void init(ModuleInitializationLevel l) {
+              if (l == MODULE_INITIALIZATION_LEVEL_SCENE) GDREGISTER_CLASS(Probe);
+          }
+          static void term(ModuleInitializationLevel) {}
+          extern "C" GDExtensionBool GDE_EXPORT probe_init(GDExtensionInterfaceGetProcAddress p, const GDExtensionClassLibraryPtr lib, GDExtensionInitialization *r) {
+              GDExtensionBinding::InitObject o(p, lib, r);
+              o.register_initializer(init);
+              o.register_terminator(term);
+              o.set_minimum_library_initialization_level(MODULE_INITIALIZATION_LEVEL_SCENE);
+              return o.init();
+          }
+          CPP
+      - name: Link the iOS archive into a visionOS device dylib
+        run: |
+          set +e
+          SDK=$(xcrun --sdk xros --show-sdk-path)
+          xcrun --sdk xros clang++ -target arm64-apple-xros26.0 -isysroot "$SDK" -std=c++17 -fno-exceptions -O2 \
+            -Iinclude -Igen/include -Igdextension -Igen/gdextension -DNDEBUG \
+            -dynamiclib probe/probe.cpp bin/libgodot-cpp.ios.template_release.arm64.a -o probe/libprobe.xros.dylib 2>&1 | tee probe/device-link.log
+          echo "exit status: ${PIPESTATUS[0]}" | tee -a probe/device-link.log
+      - name: Link the iOS archive into a visionOS simulator dylib
+        run: |
+          set +e
+          SDK=$(xcrun --sdk xrsimulator --show-sdk-path)
+          xcrun --sdk xrsimulator clang++ -target arm64-apple-xros26.0-simulator -isysroot "$SDK" -std=c++17 -fno-exceptions -O2 \
+            -Iinclude -Igen/include -Igdextension -Igen/gdextension -DNDEBUG \
+            -dynamiclib probe/probe.cpp bin/libgodot-cpp.ios.template_release.arm64.a -o probe/libprobe.xrsim.dylib 2>&1 | tee probe/sim-link.log
+          echo "exit status: ${PIPESTATUS[0]}" | tee -a probe/sim-link.log
+      - name: Inspect any output
+        if: always()
+        run: for f in probe/*.dylib; do [ -f "$f" ] && { echo "== $f"; otool -l "$f" | grep -A4 LC_BUILD_VERSION; }; done; true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visionos-baseline-logs
+          path: probe/*.log
