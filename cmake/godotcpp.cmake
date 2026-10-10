@@ -80,6 +80,15 @@ function(godot_arch_name OUTVAR)
         endif()
     endif()
 
+    # Apple cross-compiles without a toolchain file (e.g. visionOS) leave CMAKE_SYSTEM_PROCESSOR empty
+    if(NOT CMAKE_SYSTEM_PROCESSOR AND DEFINED CMAKE_OSX_ARCHITECTURES)
+        list(LENGTH CMAKE_OSX_ARCHITECTURES OSX_ARCH_COUNT)
+        if(OSX_ARCH_COUNT EQUAL 1 AND CMAKE_OSX_ARCHITECTURES IN_LIST ARCH_LIST)
+            set(${OUTVAR} "${CMAKE_OSX_ARCHITECTURES}" PARENT_SCOPE)
+            return()
+        endif()
+    endif()
+
     # Direct match early out.
     string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" ARCH)
     if(ARCH IN_LIST ARCH_LIST)
