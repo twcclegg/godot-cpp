@@ -29,6 +29,8 @@ android.debug.arm64 = "res://bin/libmytest.android.template_debug.arm64.so"
 android.release.arm64 = "res://bin/libmytest.android.template_release.arm64.so"
 ios.debug = "res://bin/libmytest.ios.template_debug.xcframework"
 ios.release = "res://bin/libmytest.ios.template_release.xcframework"
+visionos.debug = "res://bin/libmytest.visionos.template_debug.xcframework"
+visionos.release = "res://bin/libmytest.visionos.template_release.xcframework"
 web.debug.threads.wasm32 = "res://bin/libmytest.web.template_debug.wasm32.wasm"
 web.release.threads.wasm32 = "res://bin/libmytest.web.template_release.wasm32.wasm"
 web.debug.wasm32 = "res://bin/libmytest.web.template_debug.wasm32.nothreads.wasm"
@@ -40,4 +42,10 @@ ios.debug = {
 }
 ios.release = {
   "res://bin/libgodot-cpp.ios.template_release.xcframework": ""
+}
+visionos.debug = {
+  "res://bin/libgodot-cpp.visionos.template_debug.xcframework": ""
+}
+visionos.release = {
+  "res://bin/libgodot-cpp.visionos.template_release.xcframework": ""
 }

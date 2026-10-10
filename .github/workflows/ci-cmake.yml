@@ -95,6 +95,20 @@ jobs:
             flags: arch=arm64
             run-tests: false
 
+          - name: 🥽 visionOS (arm64, XCode)
+            os: macos-latest
+            platform: visionos
+            config-flags:
+              -G Xcode
+              -DCMAKE_SYSTEM_NAME=visionOS
+              -DCMAKE_OSX_ARCHITECTURES=arm64
+              -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+            build-flags: --config Release
+            artifact-name: godot-cpp-visionos-arm64-release.cmake
+            artifact-path: cmake-build/bin/libgodot-cpp.visionos.template_release.arm64.a
+            flags: arch=arm64
+            run-tests: false
+
           - name: 🌐 Web (wasm32, Ninja)
             os: ubuntu-24.04
             platform: web

@@ -23,6 +23,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/android.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ios.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/linux.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/visionos.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/web.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/windows.cmake)
 
@@ -38,6 +39,7 @@ set(PLATFORM_LIST
     windows
     android
     ios
+    visionos
     web
 )
 
@@ -74,6 +76,15 @@ function(godot_arch_name OUTVAR)
             return()
         elseif(CMAKE_VS_PLATFORM_NAME STREQUAL "ARM64")
             set(${OUTVAR} "arm64" PARENT_SCOPE)
+            return()
+        endif()
+    endif()
+
+    # Apple cross-compiles without a toolchain file (e.g. visionOS) leave CMAKE_SYSTEM_PROCESSOR empty
+    if(NOT CMAKE_SYSTEM_PROCESSOR AND DEFINED CMAKE_OSX_ARCHITECTURES)
+        list(LENGTH CMAKE_OSX_ARCHITECTURES OSX_ARCH_COUNT)
+        if(OSX_ARCH_COUNT EQUAL 1 AND CMAKE_OSX_ARCHITECTURES IN_LIST ARCH_LIST)
+            set(${OUTVAR} "${CMAKE_OSX_ARCHITECTURES}" PARENT_SCOPE)
             return()
         endif()
     endif()
@@ -208,6 +219,7 @@ function(godotcpp_options)
     ios_options()
     linux_options()
     macos_options()
+    visionos_options()
     web_options()
     windows_options()
 endfunction()
@@ -329,6 +341,7 @@ function(godotcpp_generate)
         "$<$<PLATFORM_ID:iOS>:ios>"
         "$<$<PLATFORM_ID:Linux>:linux>"
         "$<$<PLATFORM_ID:Darwin>:macos>"
+        "$<$<PLATFORM_ID:visionOS>:visionos>"
         "$<$<PLATFORM_ID:Emscripten>:web>"
         "$<$<PLATFORM_ID:Windows>:windows>"
         "$<$<PLATFORM_ID:Msys>:windows>"
@@ -436,6 +449,8 @@ function(godotcpp_generate)
         linux_generate()
     elseif(CMAKE_SYSTEM_NAME STREQUAL Darwin)
         macos_generate()
+    elseif(CMAKE_SYSTEM_NAME STREQUAL visionOS)
+        visionos_generate()
     elseif(CMAKE_SYSTEM_NAME STREQUAL Emscripten)
         web_generate()
     elseif(CMAKE_SYSTEM_NAME STREQUAL Windows)
